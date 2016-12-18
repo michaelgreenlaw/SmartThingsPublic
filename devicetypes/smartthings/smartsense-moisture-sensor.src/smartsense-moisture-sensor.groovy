@@ -102,7 +102,7 @@ def parse(String description) {
 	}
 
 	log.debug "Parse returned $map"
-	def result = map ? createEvent(map) : null
+	def result = map ? createEvent(map) : [:]
 
 	if (description?.startsWith('enroll request')) {
 		List cmds = enrollResponse()
@@ -128,7 +128,7 @@ private Map parseCatchAllMessage(String description) {
 				if (cluster.command == 0x07) {
 					if (cluster.data[0] == 0x00){
 						log.debug "TEMP REPORTING CONFIG RESPONSE" + cluster
-						sendEvent(name: "checkInterval", value: 60 * 12, displayed: false, data: [protocol: "zigbee", hubHardwareId: device.hub.hardwareID])
+						resultMap = [name: "checkInterval", value: 60 * 12, displayed: false, data: [protocol: "zigbee", hubHardwareId: device.hub.hardwareID]]
 					}
 					else {
 						log.warn "TEMP REPORTING CONFIG FAILED- error code:${cluster.data[0]}"
@@ -202,48 +202,37 @@ private Map getBatteryResult(rawValue) {
 	log.debug "Battery rawValue = ${rawValue}"
 	def linkText = getLinkText(device)
 
-	def result = [
-		name: 'battery',
-		value: '--',
-		translatable: true
-	]
+	def result = [:]
 
 	def volts = rawValue / 10
 
-	if (rawValue == 0 || rawValue == 255) {}
-	else {
-		if (volts > 3.5) {
-			result.descriptionText = "{{ device.displayName }} battery has too much power: (> 3.5) volts."
-		}
-		else {
-			if (device.getDataValue("manufacturer") == "SmartThings") {
-				volts = rawValue // For the batteryMap to work the key needs to be an int
-				def batteryMap = [28:100, 27:100, 26:100, 25:90, 24:90, 23:70,
-								  22:70, 21:50, 20:50, 19:30, 18:30, 17:15, 16:1, 15:0]
-				def minVolts = 15
-				def maxVolts = 28
+	if (!(rawValue == 0 || rawValue == 255)) {
+		result.name = 'battery'
+		result.translatable = true
+		result.descriptionText = "{{ device.displayName }} battery was {{ value }}%"
+		if (device.getDataValue("manufacturer") == "SmartThings") {
+			volts = rawValue // For the batteryMap to work the key needs to be an int
+			def batteryMap = [28: 100, 27: 100, 26: 100, 25: 90, 24: 90, 23: 70,
+							  22: 70, 21: 50, 20: 50, 19: 30, 18: 30, 17: 15, 16: 1, 15: 0]
+			def minVolts = 15
+			def maxVolts = 28
 
-				if (volts < minVolts)
-					volts = minVolts
-				else if (volts > maxVolts)
-					volts = maxVolts
-				def pct = batteryMap[volts]
-				if (pct != null) {
-					result.value = pct
-					result.descriptionText = "{{ device.displayName }} battery was {{ value }}%"
-				}
-			}
-			else {
-				def minVolts = 2.1
-				def maxVolts = 3.0
-				def pct = (volts - minVolts) / (maxVolts - minVolts)
-				def roundedPct = Math.round(pct * 100)
-				if (roundedPct <= 0)
-					roundedPct = 1
-				result.value = Math.min(100, roundedPct)
-				result.descriptionText = "{{ device.displayName }} battery was {{ value }}%"
-			}
+			if (volts < minVolts)
+				volts = minVolts
+			else if (volts > maxVolts)
+				volts = maxVolts
+			def pct = batteryMap[volts]
+			result.value = pct
+		} else {
+			def minVolts = 2.1
+			def maxVolts = 3.0
+			def pct = (volts - minVolts) / (maxVolts - minVolts)
+			def roundedPct = Math.round(pct * 100)
+			if (roundedPct <= 0)
+				roundedPct = 1
+			result.value = Math.min(100, roundedPct)
 		}
+
 	}
 
 	return result
@@ -304,9 +293,9 @@ def refresh() {
 }
 
 def configure() {
-	// Device-Watch allows 3 check-in misses from device (plus 1 min lag time)
+	// Device-Watch allows 2 check-in misses from device + ping (plus 1 min lag time)
 	// enrolls with default periodic reporting until newer 5 min interval is confirmed
-	sendEvent(name: "checkInterval", value: 3 * 60 * 60 + 1 * 60, displayed: false, data: [protocol: "zigbee", hubHardwareId: device.hub.hardwareID])
+	sendEvent(name: "checkInterval", value: 2 * 60 * 60 + 1 * 60, displayed: false, data: [protocol: "zigbee", hubHardwareId: device.hub.hardwareID])
 
 	// temperature minReportTime 30 seconds, maxReportTime 5 min. Reporting interval if no activity
 	// battery minReport 30 seconds, maxReportTime 6 hrs by default
