@@ -1,14 +1,13 @@
 /**
  *
- *  zooZ Mini Plug
+ *  zooZ Z-Wave Smart Plug
  *   
  *	github: Eric Maycock (erocm123)
  *	email: erocmail@gmail.com
- *	Date: 2016-10-05
+ *	Date: 2016-12-01
  *	Copyright Eric Maycock
  *
- *  Code has elements from other community source @CyrilPeponnet (Z-Wave Parameter Sync). Includes all 
- *  configuration parameters and ease of advanced configuration. 
+ *  Includes all configuration parameters and ease of advanced configuration. 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -22,7 +21,7 @@
  */
  
 metadata {
-	definition (name: "zooZ Mini Plug", namespace: "erocm123", author: "Eric Maycock") {
+	definition (name: "zooZ Z-Wave Smart Plug", namespace: "erocm123", author: "Eric Maycock") {
 		capability "Energy Meter"
         capability "Voltage Measurement"
 		capability "Actuator"
@@ -38,7 +37,7 @@ metadata {
         attribute   "needUpdate", "string"
         attribute   "amperage", "number"
 
-        fingerprint deviceId: "0x1001", inClusters: "0x20,0x25,0x27,0x72,0x86,0x70,0x85,0x59,0x5A,0x73,0x71,0x32,0x5E"
+        fingerprint deviceId: "0x1001", inClusters: "0x5E,0x25,0x32,0x27,0x2C,0x2B,0x70,0x85,0x59,0x72,0x86,0x7A,0x73,0x5A"
                                                            
 	}
     
@@ -78,7 +77,7 @@ metadata {
 			state "default", label:'${currentValue} A'
 		}
 		standardTile("reset", "device.energy", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "default", label:'reset kWh', action:"reset"
+			state "default", label:'reset\r\nkWh', action:"reset"
 		}
 		standardTile("energy", "device.energy", decoration: "flat", width: 2, height: 2) {
 			state "default", label:'${currentValue} kWh'
@@ -281,6 +280,8 @@ def generate_preferences(configuration_model)
     }
 }
 
+ /*  Code has elements from other community source @CyrilPeponnet (Z-Wave Parameter Sync). */
+
 def update_current_properties(cmd)
 {
     def currentProperties = state.currentProperties ?: [:]
@@ -418,84 +419,85 @@ def configuration_model()
 {
 '''
 <configuration>
-  <Value type="list" byteSize="1" index="1" label="Metering Report" min="0" max="1" value="1" setting_type="zwave" fw="">
-    <Help>
-Enable or disable the sending of meter reports.
-Default: Enable
-   </Help>
-        <Item label="Disable" value="0" />
-        <Item label="Enable" value="1" />
-  </Value>
-  <Value type="byte" byteSize="2" index="2" label="Metering Report Frequency" min="1" max="65536" value="300" setting_type="zwave" fw="">
-    <Help>
-Number of seconds metering report is sent to controller
-Range: 1~65536
+<Value type="byte" byteSize="2" index="151" label="Power Report Value Threshold" min="1" max="65535" value="50" setting_type="zwave" fw="">
+ <Help>
+Number of Watts the appliance needs to go over for the change to be reported
+Range: 1 to 65535
+Default: 50
+</Help>
+</Value>
+<Value type="byte" byteSize="1" index="152" label="Power Report Percentage Threshold" min="1" max="255" value="10" setting_type="zwave" fw="">
+ <Help>
+Percentage in power usage change the appliance needs to go over for the event to be reported
+Range: 1 to 255
+Default: 10
+</Help>
+</Value>
+<Value type="byte" byteSize="4" index="171" label="Power Report Frequency" min="0" max="2678400" value="30" setting_type="zwave" fw="">
+ <Help>
+Number of seconds for the interval the Smart Plug will report power consumption
+Range: 0,5 to 2678400
+Default: 30
+</Help>
+</Value>
+<Value type="byte" byteSize="4" index="172" label="Energy Report Frequency" min="0" max="2678400" value="300" setting_type="zwave" fw="">
+ <Help>
+Number of seconds for the interval the Smart Plug will report energy usage
+Range: 0,5 to 2678400
 Default: 300
-    </Help>
-  </Value>
-  <Value type="byte" byteSize="1" index="3" label="Overload Protection" min="1" max="16" value="13" setting_type="zwave" fw="">
-    <Help>
-Maximum number of Amperes to be accepted by the Mini Plug.
-Range: 1~16
-Default: 13
-    </Help>
-  </Value>
-    <Value type="short" byteSize="1" index="4" label="Overload Notification" min="1" max="13" value="12" setting_type="zwave" fw="">
-    <Help>
-Maximum number of Amperes that will trigger overload LED notification on the Mini Plug.
-Range: 1~13
-Default: 12
-    </Help>
-  </Value>
-  <Value type="list" byteSize="1" index="5" label="LED Notifications" min="0" max="1" value="1" setting_type="zwave" fw="">
-    <Help>
-Enable or disable LED Notifications
-Default: Enable
-    </Help>
-        <Item label="Disable" value="0" />
-        <Item label="Enable" value="1" />
-  </Value>
-    <Value type="byte" byteSize="1" index="6" label="Power Report Percentage Threshold" min="1" max="100" value="5" setting_type="zwave" fw="">
-    <Help>
-Percentage of change in power consumption, voltage, electricity, or energy usage to be reported to controller by the Mini Plug
-Range: 1~100
-Default: 5
-    </Help>
-  </Value>
-    <Value type="list" byteSize="1" index="7" label="On/Off Status Recovery After Power Failure" min="0" max="1" value="1" setting_type="zwave" fw="">
-    <Help>
-Default: Previous State
-    </Help>
-        <Item label="Off" value="0" />
-        <Item label="Previous State" value="1" />
-  </Value>
-  <Value type="list" byteSize="1" index="8" label="Auto Turn-Off Timer" min="0" max="1" value="0" setting_type="zwave" fw="">
-    <Help>
-Enable or disable the auto turn-off timer
-Default: Disabled
-    </Help>
-        <Item label="Disable" value="0" />
-        <Item label="Enable" value="1" />
-  </Value>
-  <Value type="byte" byteSize="2" index="9" label="Auto Turn-Off Timer Settings" min="1" max="65535" value="150" setting_type="zwave" fw="">
-    <Help>
-After turning on the Mini Plug, the device will automatically turn off after this number of minutes (only if "Auto Turn-Off Timer" is enabled).
-Range: 1~65535
-Default: 1
-    </Help>
-  </Value>
-    <Value type="list" byteSize="1" index="10" label="Manual Control" min="0" max="1" value="1" setting_type="zwave" fw="">
-    <Help>
-Enable or disable manual control
+</Help>
+</Value>
+<Value type="byte" byteSize="4" index="173" label="Voltage Report Frequency" min="0" max="2678400" value="60" setting_type="zwave" fw="">
+ <Help>
+Number of seconds for the interval the Smart Plug will report voltage
+Range: 0,5 to 2678400
+Default: 0 (Disabled)
+</Help>
+</Value>
+<Value type="byte" byteSize="4" index="174" label="Electricity Report Frequency" min="0" max="2678400" value="60" setting_type="zwave" fw="">
+ <Help>
+Number of seconds for the interval the Smart Plug will report energy current
+Range: 0,5 to 2678400
+Default: 0 (Disabled)
+</Help>
+</Value>
+<Value type="list" byteSize="1" index="20" label="Overload Protection" min="0" max="1" value="1" setting_type="zwave" fw="">
+ <Help>
+Range: 0 to 1
 Default: Enabled
-    </Help>
+</Help>
         <Item label="Disable" value="0" />
         <Item label="Enable" value="1" />
-  </Value>
-  <Value type="boolean" index="enableDebugging" label="Enable Debug Logging?" value="true" setting_type="preference" fw="">
-    <Help>
-    </Help>
-  </Value>
+</Value>
+<Value type="list" byteSize="1" index="21" label="On/Off Status Recovery After Power Failure" min="0" max="2" value="0" setting_type="zwave" fw="">
+ <Help>
+Smart Plug remembers the status prior to power outage and turns back to it (default)
+Range: 0 to 2
+Default: Previous
+</Help>
+        <Item label="Previous" value="0" />
+        <Item label="On" value="1" />
+        <Item label="Off" value="2" />
+</Value>
+<Value type="list" byteSize="1" index="24" label="On/Off Status Change Notifications" min="0" max="2" value="1" setting_type="zwave" fw="">
+ <Help>
+On, Off, or Manual Only. When set to "Manual Only", notifications are only sent when physically pressing the button on the plug
+Range: 0 to 2
+Default: On
+</Help>
+        <Item label="Off" value="0" />
+        <Item label="On" value="1" />
+        <Item label="Manual Only" value="2" />
+</Value>
+<Value type="list" byteSize="1" index="27" label="LED Indicator Control" min="0" max="1" value="0" setting_type="zwave" fw="">
+ <Help>
+LED indicator will display power consumption whenever the device is plugged in (LED stays on at all times) or for 5 Seconds after it is turned on or off 
+Range: 0 to 1
+Default: Always
+</Help>
+        <Item label="Always" value="0" />
+        <Item label="For 5 Seconds" value="1" />
+</Value>
 </configuration>
 '''
 }
