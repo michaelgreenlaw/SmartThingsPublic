@@ -17,10 +17,11 @@
  */
 
 metadata {
-	definition (name: "Z-Wave Motion Sensor", namespace: "smartthings", author: "SmartThings") {
+	definition (name: "Z-Wave Motion Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.motion") {
 		capability "Motion Sensor"
 		capability "Sensor"
 		capability "Battery"
+		capability "Health Check"
 
 		fingerprint mfr: "011F", prod: "0001", model: "0001", deviceJoinName: "Schlage Motion Sensor"  // Schlage motion
 		fingerprint mfr: "014A", prod: "0001", model: "0001", deviceJoinName: "Ecolink Motion Sensor"  // Ecolink motion
@@ -35,11 +36,11 @@ metadata {
 		status "inactive": "command: 3003, payload: 00"
 		status "active": "command: 3003, payload: FF"
 	}
-	
+
 	tiles {
 		standardTile("motion", "device.motion", width: 2, height: 2) {
-			state("active", label:'motion', icon:"st.motion.motion.active", backgroundColor:"#53a7c0")
-			state("inactive", label:'no motion', icon:"st.motion.motion.inactive", backgroundColor:"#ffffff")
+			state("active", label:'motion', icon:"st.motion.motion.active", backgroundColor:"#00A0DC")
+			state("inactive", label:'no motion', icon:"st.motion.motion.inactive", backgroundColor:"#cccccc")
 		}
 		valueTile("battery", "device.battery", inactiveLabel: false, decoration: "flat") {
 			state("battery", label:'${currentValue}% battery', unit:"")
@@ -48,6 +49,16 @@ metadata {
 		main "motion"
 		details(["motion", "battery"])
 	}
+}
+
+def installed() {
+// Device wakes up every 4 hours, this interval allows us to miss one wakeup notification before marking offline
+	sendEvent(name: "checkInterval", value: 8 * 60 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
+}
+
+def updated() {
+// Device wakes up every 4 hours, this interval allows us to miss one wakeup notification before marking offline
+	sendEvent(name: "checkInterval", value: 8 * 60 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
 }
 
 def parse(String description) {
